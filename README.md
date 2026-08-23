@@ -81,6 +81,8 @@ Data/          DbContext and one EF config class per table
 Repositories/  database reads and writes only
 Services/      business rules - approvals, requests, auth, dashboard
 Components/    Blazor pages and shared components
+ViewModels/    form models for the login and new-request pages
+Common/        shared helpers, currently just currency formatting
 Database/      SQL scripts and the database backup
 ```
 
