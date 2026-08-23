@@ -106,8 +106,11 @@ If you would rather create an empty database, run the two scripts in `/Database`
 
 Both are one-shot. They do not drop or clear anything, so run them against a fresh database only.
 
-<img width="1913" height="984" alt="image" src="https://github.com/user-attachments/assets/15bd62f8-d7b6-4e26-9581-1100091b89a3" />
-<img width="1891" height="990" alt="image" src="https://github.com/user-attachments/assets/0efbb0b4-a637-4730-886e-22116cd4f057" />
-<img width="1897" height="987" alt="image" src="https://github.com/user-attachments/assets/e54b23f8-5e8e-4736-b2b0-e468f339f35c" />
-<img width="1900" height="986" alt="image" src="https://github.com/user-attachments/assets/7a638f20-9bb6-4770-8969-fb127b66d9e4" />
-<img width="1899" height="984" alt="image" src="https://github.com/user-attachments/assets/67c7eb04-9a47-4eeb-b43e-490388b6b5be" />
+<img width="1912" height="980" alt="image" src="https://github.com/user-attachments/assets/a4791bde-19b2-40a2-a364-91213e0e2f65" />
+<img width="1896" height="975" alt="image" src="https://github.com/user-attachments/assets/53c8d669-413a-4a08-b5c4-37668e103446" />
+<img width="1895" height="982" alt="image" src="https://github.com/user-attachments/assets/6aa1cb7c-4276-4322-b40f-7ca6efcc0df7" />
+<img width="1895" height="982" alt="image" src="https://github.com/user-attachments/assets/009e7d9d-f91b-48ca-8655-fc50721215b4" />
+<img width="1892" height="987" alt="image" src="https://github.com/user-attachments/assets/ac3235b2-892f-47a6-96bf-d021bd38ae27" />
+
+
+
