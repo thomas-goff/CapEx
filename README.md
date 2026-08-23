@@ -106,6 +106,7 @@ If you would rather create an empty database, run the two scripts in `/Database`
 
 Both are one-shot. They do not drop or clear anything, so run them against a fresh database only.
 
+<img width="1913" height="984" alt="image" src="https://github.com/user-attachments/assets/15bd62f8-d7b6-4e26-9581-1100091b89a3" />
 <img width="1891" height="990" alt="image" src="https://github.com/user-attachments/assets/0efbb0b4-a637-4730-886e-22116cd4f057" />
 <img width="1897" height="987" alt="image" src="https://github.com/user-attachments/assets/e54b23f8-5e8e-4736-b2b0-e468f339f35c" />
 <img width="1900" height="986" alt="image" src="https://github.com/user-attachments/assets/7a638f20-9bb6-4770-8969-fb127b66d9e4" />
