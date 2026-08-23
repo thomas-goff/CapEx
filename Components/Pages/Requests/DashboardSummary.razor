@@ -1,0 +1,73 @@
+@using CapEx.Services.Dashboard
+
+<div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-4">
+    <StatTile Label="Total requests"
+              Value="@Metrics.TotalRequests.ToString()"
+              Note="@($"{Metrics.TotalValue.ToRands()} requested")" />
+
+    <StatTile Label="Pending"
+              Value="@Metrics.PendingCount.ToString()"
+              ValueClass="text-warning"
+              Note="@($"{Metrics.PendingValue.ToRands()} in flight")" />
+
+    <StatTile Label="Approved"
+              Value="@Metrics.ApprovedCount.ToString()"
+              ValueClass="text-success"
+              Note="@($"{Metrics.ApprovedValue.ToRands()} committed")" />
+
+    <StatTile Label="Rejected"
+              Value="@Metrics.RejectedCount.ToString()"
+              ValueClass="text-danger"
+              Note="@RejectedNote" />
+
+    <StatTile Label="Approval rate"
+              Value="@ApprovalRate"
+              Note="@ApprovalRateNote" />
+
+    @if (ShowApproverTile)
+    {
+        <StatTile Label="Awaiting you"
+                  Value="@Metrics.AwaitingYourDecision.ToString()"
+                  ValueClass="@(Metrics.AwaitingYourDecision > 0 ? "text-primary" : string.Empty)"
+                  Highlight="Metrics.AwaitingYourDecision > 0"
+                  Note="@AwaitingNote" />
+    }
+    else
+    {
+        <StatTile Label="Average request"
+                  Value="@AverageValue"
+                  Note="across all requests" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public DashboardMetrics Metrics { get; set; } = DashboardMetrics.Empty;
+
+    [Parameter]
+    public User? Viewer { get; set; }
+
+    private bool ShowApproverTile => Viewer?.Role.IsApprover() == true;
+
+    private int DecidedCount => Metrics.ApprovedCount + Metrics.RejectedCount;
+
+    private string RejectedNote => DecidedCount == 0
+        ? "nothing decided yet"
+        : $"{Metrics.RejectedCount} of {DecidedCount} decided";
+
+    private string ApprovalRate => DecidedCount == 0
+        ? "-"
+        : $"{Math.Round(Metrics.ApprovedCount * 100m / DecidedCount)}%";
+
+    private string ApprovalRateNote => DecidedCount == 0
+        ? "no decisions yet"
+        : "of decided requests";
+
+    private string AverageValue => Metrics.TotalRequests == 0
+        ? "-"
+        : (Metrics.TotalValue / Metrics.TotalRequests).ToRands();
+
+    private string AwaitingNote => Metrics.AwaitingYourDecision == 0
+        ? "nothing on you"
+        : "waiting on your decision";
+}

@@ -1,0 +1,160 @@
+@using CapEx.Common
+@using CapEx.Services.Approvals
+@using CapEx.Services.Requests
+@inject IRequestService RequestService
+@inject IApprovalTierPolicy TierPolicy
+
+<Modal IsOpen="IsOpen" Title="New request" OnClose="CancelAsync">
+    <EditForm Model="_form" OnValidSubmit="SubmitAsync">
+        <DataAnnotationsValidator />
+
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label" for="request-title">Title</label>
+                <InputText id="request-title"
+                           class="form-control"
+                           placeholder="Replace warehouse forklift"
+                           @bind-Value="_form.Title" />
+                <ValidationMessage For="() => _form.Title" class="text-danger small" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="request-amount">Amount (ZAR)</label>
+                <InputNumber id="request-amount"
+                             class="form-control"
+                             step="0.01"
+                             @bind-Value="_form.Amount" />
+                <ValidationMessage For="() => _form.Amount" class="text-danger small" />
+
+                <div class="form-text">@ApprovalHint</div>
+            </div>
+
+            <div class="mb-1">
+                <label class="form-label" for="request-motivation">Motivation</label>
+                <InputTextArea id="request-motivation"
+                               class="form-control"
+                               rows="4"
+                               placeholder="Why is this spend needed?"
+                               @bind-Value="_form.Motivation" />
+                <ValidationMessage For="() => _form.Motivation" class="text-danger small" />
+            </div>
+
+            @if (_errorMessage is not null)
+            {
+                <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">
+                    @_errorMessage
+                </div>
+            }
+        </div>
+
+        <div class="modal-footer">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    disabled="@_isSaving"
+                    @onclick="CancelAsync">
+                Cancel
+            </button>
+
+            <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                @(_isSaving ? "Submitting..." : "Submit request")
+            </button>
+        </div>
+    </EditForm>
+</Modal>
+
+@code {
+    private NewRequestFormModel _form = new();
+
+    private string? _errorMessage;
+
+    private bool _isSaving;
+
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter, EditorRequired]
+    public int RequestedByUserId { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancelled { get; set; }
+
+    [Parameter]
+    public EventCallback<Request> OnCreated { get; set; }
+
+    private string ApprovalHint
+    {
+        get
+        {
+            if (_form.Amount is not { } amount || amount <= 0m)
+            {
+                return "Requests of R 5 000.00 and over need approval.";
+            }
+
+            var approvers = TierPolicy.GetRequiredApprovers(amount);
+
+            if (approvers.Count == 0)
+            {
+                return $"{amount.ToRands()} is under R 5 000.00, so it is approved automatically.";
+            }
+
+            var chain = string.Join(" → ", approvers.Select(role => role.ToDisplayName()));
+
+            return $"{amount.ToRands()} needs: {chain}.";
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && _wasOpen)
+        {
+            return;
+        }
+
+        if (IsOpen)
+        {
+            _form = new NewRequestFormModel();
+            _errorMessage = null;
+        }
+
+        _wasOpen = IsOpen;
+    }
+
+    private bool _wasOpen;
+
+    private async Task SubmitAsync()
+    {
+        if (_isSaving || _form.Amount is not { } amount)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        _errorMessage = null;
+
+        try
+        {
+            var command = new CreateRequestCommand(
+                RequestedByUserId,
+                _form.Title,
+                amount,
+                _form.Motivation);
+
+            var created = await RequestService.CreateAsync(command);
+
+            await OnCreated.InvokeAsync(created);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"The request could not be saved. {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private Task CancelAsync()
+    {
+        return _isSaving ? Task.CompletedTask : OnCancelled.InvokeAsync();
+    }
+}

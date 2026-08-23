@@ -1,0 +1,94 @@
+@page "/login"
+@inject IAuthService AuthService
+@inject ICurrentUserService CurrentUser
+@inject NavigationManager Navigation
+
+<PageTitle>Sign in - CapEx</PageTitle>
+
+<div class="login-wrapper">
+    <div class="card login-card shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h4 mb-1">Sign in</h1>
+            <p class="text-muted small mb-4">Capital Expenditure Requests</p>
+
+            <EditForm Model="_form" OnValidSubmit="HandleLoginAsync">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label" for="email">Email</label>
+                    <InputText id="email"
+                               class="form-control"
+                               autocomplete="username"
+                               @bind-Value="_form.Email" />
+                    <ValidationMessage For="() => _form.Email" class="text-danger small" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password</label>
+                    <InputText id="password"
+                               type="password"
+                               class="form-control"
+                               autocomplete="current-password"
+                               @bind-Value="_form.Password" />
+                    <ValidationMessage For="() => _form.Password" class="text-danger small" />
+                </div>
+
+                @if (_errorMessage is not null)
+                {
+                    <div class="alert alert-danger py-2 small" role="alert">
+                        @_errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@_isBusy">
+                    @(_isBusy ? "Signing in..." : "Sign in")
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly LoginFormModel _form = new();
+
+    private string? _errorMessage;
+
+    private bool _isBusy;
+
+    protected override void OnInitialized()
+    {
+        if (CurrentUser.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/", replace: true);
+        }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(_form.Email, _form.Password);
+
+            if (!result.Succeeded || result.User is null)
+            {
+                _errorMessage = result.ErrorMessage;
+                return;
+            }
+
+            CurrentUser.SignIn(result.User);
+            Navigation.NavigateTo("/", replace: true);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

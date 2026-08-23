@@ -1,0 +1,29 @@
+<div class="col">
+    <div class="card stat-tile h-100 @(Highlight ? "border-primary" : string.Empty)">
+        <div class="card-body py-3">
+            <div class="stat-label text-uppercase text-muted">@Label</div>
+            <div class="stat-value @ValueClass">@Value</div>
+            @if (!string.IsNullOrWhiteSpace(Note))
+            {
+                <div class="stat-note text-muted">@Note</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Note { get; set; }
+
+    [Parameter]
+    public string ValueClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Highlight { get; set; }
+}

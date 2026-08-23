@@ -1,0 +1,304 @@
+@using CapEx.Services.Approvals
+@using CapEx.Services.Requests
+@inject IRequestService RequestService
+@inject IApprovalService ApprovalService
+@inject IApprovalWorkflow ApprovalWorkflow
+
+<Modal IsOpen="IsOpen" Title="@ModalTitle" Size="lg" OnClose="CloseAsync">
+    <div class="modal-body">
+        @if (_isLoading)
+        {
+            <p class="text-muted mb-0">Loading...</p>
+        }
+        else if (_request is null)
+        {
+            <p class="text-danger mb-0">That request could not be loaded.</p>
+        }
+        else
+        {
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="mb-1">@_request.Title</h5>
+                    <div class="text-muted small">
+                        Raised by @(_request.RequestedByUser?.UserName ?? "unknown")
+                        on @_request.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                    </div>
+                </div>
+
+                <span class="badge fs-6 @_request.Status.ToBadgeClass()">
+                    @_request.Status.ToDisplayName()
+                </span>
+            </div>
+
+            <dl class="row mb-4">
+                <dt class="col-sm-3">Amount</dt>
+                <dd class="col-sm-9 fw-semibold">@_request.Amount.ToRands()</dd>
+
+                <dt class="col-sm-3">Motivation</dt>
+                <dd class="col-sm-9 motivation-text">@_request.Motivation</dd>
+            </dl>
+
+            <h6 class="text-uppercase text-muted small">Approval chain</h6>
+
+            @if (_progress is null || _progress.NeedsNoApproval)
+            {
+                <p class="small mb-4">
+                    Under R 5 000.00, so no approval was needed. Approved on submission.
+                </p>
+            }
+            else
+            {
+                <ol class="list-group list-group-numbered mb-4">
+                    @foreach (var stage in _progress.Stages)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-semibold">@stage.Role.ToDisplayName()</div>
+                                @if (stage.Action is { } action)
+                                {
+                                    <div class="small text-muted">
+                                        @(action.ActedByUser?.UserName ?? "unknown")
+                                        on @action.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                    </div>
+                                }
+                            </div>
+
+                            <span class="badge @StageBadgeClass(stage.State)">
+                                @StageLabel(stage.State)
+                            </span>
+                        </li>
+                    }
+                </ol>
+            }
+
+            <h6 class="text-uppercase text-muted small">Approval history</h6>
+
+            @if (_request.Approvals.Count == 0)
+            {
+                <p class="small text-muted mb-0">Nothing recorded yet.</p>
+            }
+            else
+            {
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">When</th>
+                            <th scope="col">Who</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Decision</th>
+                            <th scope="col">Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var action in _request.Approvals.OrderBy(a => a.CreatedUtc))
+                        {
+                            <tr>
+                                <td class="text-nowrap small">
+                                    @action.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                </td>
+                                <td>@(action.ActedByUser?.UserName ?? "unknown")</td>
+                                <td class="small">@(action.ActedByUser?.Role.ToDisplayName() ?? "-")</td>
+                                <td>
+                                    <span class="badge @(action.Approved ? "bg-success" : "bg-danger")">
+                                        @(action.Approved ? "Approved" : "Rejected")
+                                    </span>
+                                </td>
+                                <td class="small">@(string.IsNullOrWhiteSpace(action.Comment) ? "-" : action.Comment)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            @if (_eligibility is { CanAct: true })
+            {
+                <hr />
+
+                <div class="mb-2">
+                    <label class="form-label" for="decision-comment">Comment (optional)</label>
+                    <textarea id="decision-comment"
+                              class="form-control"
+                              rows="2"
+                              maxlength="1000"
+                              disabled="@_isSaving"
+                              @bind="_comment"
+                              @bind:event="oninput"></textarea>
+                </div>
+            }
+            else if (_eligibility?.Reason is { } reason)
+            {
+                <hr />
+                <p class="small text-muted mb-0">@reason</p>
+            }
+
+            @if (_errorMessage is not null)
+            {
+                <div class="alert alert-danger py-2 small mt-3 mb-0" role="alert">
+                    @_errorMessage
+                </div>
+            }
+        }
+    </div>
+
+    <div class="modal-footer">
+        @if (_eligibility is { CanAct: true })
+        {
+            <button type="button"
+                    class="btn btn-danger"
+                    disabled="@_isSaving"
+                    @onclick="() => SubmitDecisionAsync(false)">
+                Reject
+            </button>
+
+            <button type="button"
+                    class="btn btn-success"
+                    disabled="@_isSaving"
+                    @onclick="() => SubmitDecisionAsync(true)">
+                Approve
+            </button>
+        }
+
+        <button type="button" class="btn btn-outline-secondary" disabled="@_isSaving" @onclick="CloseAsync">
+            Close
+        </button>
+    </div>
+</Modal>
+
+@code {
+    private Request? _request;
+    private ApprovalProgress? _progress;
+    private ApprovalEligibility? _eligibility;
+
+    private string _comment = string.Empty;
+    private string? _errorMessage;
+    private bool _isLoading;
+    private bool _isSaving;
+
+    private int? _loadedRequestId;
+
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter]
+    public int? RequestId { get; set; }
+
+    [Parameter, EditorRequired]
+    public User? CurrentUser { get; set; }
+
+    [Parameter]
+    public EventCallback OnClosed { get; set; }
+
+    [Parameter]
+    public EventCallback OnDecisionRecorded { get; set; }
+
+    private string ModalTitle => _request is null ? "Request" : $"Request #{_request.RequestId}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen)
+        {
+            _loadedRequestId = null;
+            return;
+        }
+
+        if (RequestId is not { } requestId || _loadedRequestId == requestId)
+        {
+            return;
+        }
+
+        _loadedRequestId = requestId;
+        _comment = string.Empty;
+        _errorMessage = null;
+
+        await LoadAsync(requestId);
+    }
+
+    private async Task LoadAsync(int requestId)
+    {
+        _isLoading = true;
+
+        try
+        {
+            _request = await RequestService.GetByIdAsync(requestId);
+            RefreshDerivedState();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void RefreshDerivedState()
+    {
+        if (_request is null)
+        {
+            _progress = null;
+            _eligibility = null;
+            return;
+        }
+
+        _progress = ApprovalWorkflow.GetProgress(_request);
+
+        _eligibility = CurrentUser is null
+            ? ApprovalEligibility.Blocked("Sign in to act on this request.")
+            : ApprovalWorkflow.GetEligibility(_request, CurrentUser);
+    }
+
+    private async Task SubmitDecisionAsync(bool approved)
+    {
+        if (_isSaving || _request is null || CurrentUser is null)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        _errorMessage = null;
+
+        try
+        {
+            var command = new SubmitDecisionCommand(
+                _request.RequestId,
+                CurrentUser.UserId,
+                approved,
+                _comment);
+
+            var result = await ApprovalService.SubmitDecisionAsync(command);
+
+            if (!result.Succeeded || result.Request is null)
+            {
+                _errorMessage = result.ErrorMessage;
+
+                await LoadAsync(_request.RequestId);
+                return;
+            }
+
+            _request = result.Request;
+            _comment = string.Empty;
+            RefreshDerivedState();
+
+            await OnDecisionRecorded.InvokeAsync();
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private Task CloseAsync() => _isSaving ? Task.CompletedTask : OnClosed.InvokeAsync();
+
+    private static string StageLabel(ApprovalStageState state) => state switch
+    {
+        ApprovalStageState.Approved => "Approved",
+        ApprovalStageState.Rejected => "Rejected",
+        ApprovalStageState.AwaitingDecision => "Awaiting decision",
+        _ => "Not started"
+    };
+
+    private static string StageBadgeClass(ApprovalStageState state) => state switch
+    {
+        ApprovalStageState.Approved => "bg-success",
+        ApprovalStageState.Rejected => "bg-danger",
+        ApprovalStageState.AwaitingDecision => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}
