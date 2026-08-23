@@ -2,6 +2,8 @@ namespace CapEx.Models;
 
 public class Approval
 {
+    public const int MaxCommentLength = 1000;
+
     public int ApprovalId { get; set; }
 
     public int RequestId { get; set; }

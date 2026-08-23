@@ -16,7 +16,7 @@ public class ApprovalConfiguration : IEntityTypeConfiguration<Approval>
             .IsRequired();
 
         builder.Property(a => a.Comment)
-            .HasMaxLength(1000);
+            .HasMaxLength(Approval.MaxCommentLength);
 
         builder.Property(a => a.CreatedUtc)
             .HasColumnType("datetime2(3)")

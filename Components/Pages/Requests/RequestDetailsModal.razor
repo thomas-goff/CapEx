@@ -3,6 +3,7 @@
 @inject IRequestService RequestService
 @inject IApprovalService ApprovalService
 @inject IApprovalWorkflow ApprovalWorkflow
+@inject IApprovalTierPolicy TierPolicy
 
 <Modal IsOpen="IsOpen" Title="@ModalTitle" Size="lg" OnClose="CloseAsync">
     <div class="modal-body">
@@ -43,7 +44,8 @@
             @if (_progress is null || _progress.NeedsNoApproval)
             {
                 <p class="small mb-4">
-                    Under R 5 000.00, so no approval was needed. Approved on submission.
+                    Under @TierPolicy.ApprovalThreshold.ToRands(), so no approval was needed.
+                    Approved on submission.
                 </p>
             }
             else
@@ -90,7 +92,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var action in _request.Approvals.OrderBy(a => a.CreatedUtc))
+                        @foreach (var action in _request.Approvals)
                         {
                             <tr>
                                 <td class="text-nowrap small">
@@ -119,7 +121,7 @@
                     <textarea id="decision-comment"
                               class="form-control"
                               rows="2"
-                              maxlength="1000"
+                              maxlength="@Approval.MaxCommentLength"
                               disabled="@_isSaving"
                               @bind="_comment"
                               @bind:event="oninput"></textarea>

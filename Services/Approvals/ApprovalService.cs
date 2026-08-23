@@ -6,8 +6,6 @@ namespace CapEx.Services.Approvals;
 
 public sealed class ApprovalService : IApprovalService
 {
-    private const int MaxCommentLength = 1000;
-
     private readonly IRequestRepository _requests;
     private readonly IUserRepository _users;
     private readonly IApprovalRepository _approvals;
@@ -54,9 +52,9 @@ public sealed class ApprovalService : IApprovalService
 
         var comment = NormaliseComment(command.Comment);
 
-        if (comment is not null && comment.Length > MaxCommentLength)
+        if (comment is not null && comment.Length > Approval.MaxCommentLength)
         {
-            return DecisionResult.Failure($"Comment cannot be longer than {MaxCommentLength} characters.");
+            return DecisionResult.Failure($"Comment cannot be longer than {Approval.MaxCommentLength} characters.");
         }
 
         var newStatus = _workflow.GetStatusAfterDecision(request, command.Approved);

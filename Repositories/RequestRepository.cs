@@ -17,11 +17,7 @@ public sealed class RequestRepository : IRequestRepository
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-        return await context.Requests
-            .AsNoTracking()
-            .Include(r => r.RequestedByUser)
-            .Include(r => r.Approvals.OrderBy(a => a.CreatedUtc))
-                .ThenInclude(a => a.ActedByUser)
+        return await WithDetails(context.Requests)
             .OrderBy(r => r.RequestId)
             .ToListAsync(cancellationToken);
     }
@@ -30,11 +26,7 @@ public sealed class RequestRepository : IRequestRepository
     {
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-        return await context.Requests
-            .AsNoTracking()
-            .Include(r => r.RequestedByUser)
-            .Include(r => r.Approvals.OrderBy(a => a.CreatedUtc))
-                .ThenInclude(a => a.ActedByUser)
+        return await WithDetails(context.Requests)
             .FirstOrDefaultAsync(r => r.RequestId == requestId, cancellationToken);
     }
 
@@ -48,4 +40,11 @@ public sealed class RequestRepository : IRequestRepository
 
         return request;
     }
+
+    private static IQueryable<Request> WithDetails(IQueryable<Request> requests)
+        => requests
+            .AsNoTracking()
+            .Include(r => r.RequestedByUser)
+            .Include(r => r.Approvals.OrderBy(a => a.CreatedUtc))
+                .ThenInclude(a => a.ActedByUser);
 }
