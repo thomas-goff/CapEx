@@ -36,16 +36,16 @@ A single rejection at any stage sets the request to **Rejected** immediately.
 
 All eight seeded users share the password **`123`**.
 
-| ID | Name | Email | Role |
-|---|---|---|---|
-| 1 | Thomas Goff | tgoff@inambu.co.za | 0 — Employee |
-| 2 | Mark Freedman | mfreedman@inambu.co.za | 0 — Employee |
-| 3 | Pieter Venter | pventer@inambu.co.za | 0 — Employee |
-| 4 | Thato Dlamini | tdlamini@inambu.co.za | 0 — Employee |
-| 5 | Kelly Patterson | kpatterson@inambu.co.za | 0 — Employee |
-| 6 | Bob Lockwood | blockwood@inambu.co.za | 1 — Department Manager |
-| 7 | Alice Liddle | aliddle@inambu.co.za | 2 — Finance Director |
-| 8 | Jeff Sidebottom | jsidebottom@inambu.co.za | 3 — CEO |
+| ID | Name | Email | Role | |
+|---|---|---|---|---|
+| 1 | Thomas Goff | tgoff@inambu.co.za | 0 | Employee |
+| 2 | Mark Freedman | mfreedman@inambu.co.za | 0 | Employee |
+| 3 | Pieter Venter | pventer@inambu.co.za | 0 | Employee |
+| 4 | Thato Dlamini | tdlamini@inambu.co.za | 0 | Employee |
+| 5 | Kelly Patterson | kpatterson@inambu.co.za | 0 | Employee |
+| 6 | Bob Lockwood | blockwood@inambu.co.za | 1 | Department Manager |
+| 7 | Alice Liddle | aliddle@inambu.co.za | 2 | Finance Director |
+| 8 | Jeff Sidebottom | jsidebottom@inambu.co.za | 3 | CEO |
 
 Users 1–5 can only raise requests. Users 6–8 can raise requests and approve them.
 
@@ -89,8 +89,8 @@ The approval tiers live in one place: `Services/Approvals/AmountBasedApprovalTie
 
 If you would rather create an empty database, run the two scripts in `/Database` in order:
 
-1. `CreateTablesScript.sql` — creates the database and the three tables with their constraints
-2. `SeedUserScript.sql` — inserts the eight users above
+1. `CreateTablesScript.sql`: creates the database and the three tables with their constraints
+2. `SeedUserScript.sql`:  inserts the eight users above
 
 Both are one-shot. They do not drop or clear anything, so run them against a fresh database only.
 
