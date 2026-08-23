@@ -30,14 +30,4 @@ public sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
     }
-
-    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
-
-        return await context.Users
-            .AsNoTracking()
-            .OrderBy(u => u.UserName)
-            .ToListAsync(cancellationToken);
-    }
 }

@@ -1,6 +1,8 @@
+using CapEx.Models;
+
 namespace CapEx.Services.Authentication;
 
 public interface IAuthService
 {
-    Task<LoginResult> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
+    Task<User?> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
 }

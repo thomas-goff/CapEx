@@ -49,6 +49,8 @@
 </div>
 
 @code {
+    private const string InvalidCredentials = "That email and password combination is not recognised.";
+
     private readonly LoginFormModel _form = new();
 
     private string? _errorMessage;
@@ -75,15 +77,15 @@
 
         try
         {
-            var result = await AuthService.LoginAsync(_form.Email, _form.Password);
+            var user = await AuthService.LoginAsync(_form.Email, _form.Password);
 
-            if (!result.Succeeded || result.User is null)
+            if (user is null)
             {
-                _errorMessage = result.ErrorMessage;
+                _errorMessage = InvalidCredentials;
                 return;
             }
 
-            CurrentUser.SignIn(result.User);
+            CurrentUser.SignIn(user);
             Navigation.NavigateTo("/", replace: true);
         }
         finally
