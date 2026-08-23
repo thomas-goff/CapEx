@@ -49,30 +49,6 @@ All eight seeded users share the password **`123`**.
 
 Users 1 to 5 can only raise requests. Users 6 to 8 can raise requests and approve them.
 
-The role value is the approval order. Do not reshuffle it.
-
-## Assumptions and decisions
-
-### Requests under R5,000 are approved on submission
-
-No approver is required, so no approval row is written. The audit trail for these requests is empty on purpose.
-
-### An approver may act on their own request
-
-The brief does not forbid it, so it is not blocked. `ApprovalWorkflow.GetEligibility` is where that rule would go.
-
-### Status is derived, never stored
-
-Which approver is next comes from the amount plus the approval rows already recorded. Nothing on the request says "waiting on X", so a counter cannot drift away from the audit trail.
-
-### Passwords are stored and compared in plain text
-
-This is a fixed demo user list with no real accounts. `IPasswordVerifier` exists so swapping in hashing is a one-line change in `Program.cs`. Do not copy this pattern into anything real.
-
-### Sign-in lives per browser connection
-
-There are no cookies and no tokens. Refreshing the page signs you out.
-
 ## Project structure
 
 ```
